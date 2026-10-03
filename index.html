@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Гадание · Арт-пикник</title>
+<meta name="theme-color" content="#170F2B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Гадание">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#170F2B; --bg2:#2B1B4A;
+    --cyan:#7FE7DE; --violet:#B98CFF; --pink:#F0A8D8;
+    --text:#F3EEFF; --text-dim:#B6A9D6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow-x:hidden;}
+  body{
+    margin:0;min-height:100vh;min-height:100dvh;
+    background:radial-gradient(ellipse at 50% -10%, var(--bg2), var(--bg1) 60%);
+    background-attachment:fixed;
+    color:var(--text);font-family:'Space Grotesk',sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding: max(30px, env(safe-area-inset-top)) 20px max(50px, env(safe-area-inset-bottom));
+    text-align:center;
+    -webkit-user-select:none;user-select:none;
+  }
+  button, .orb, .card, .theme-btn{
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  .kicker{font-size:.7rem;text-transform:uppercase;letter-spacing:.2em;color:var(--pink);font-weight:700;}
+  h1{font-family:'Playfair Display',serif;font-style:italic;font-weight:600;font-size:2.1rem;margin:6px 0 4px;color:var(--text);text-shadow:0 0 18px rgba(185,140,255,.5);}
+  .sub{color:var(--text-dim);font-size:.88rem;max-width:320px;margin:0 0 22px;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:22px;width:100%;max-width:340px;}
+  .tab{flex:1;padding:10px;border-radius:20px;border:1.5px solid var(--violet);background:none;color:var(--text-dim);font-family:inherit;font-size:.82rem;cursor:pointer;}
+  .tab.active{background:var(--violet);color:#1a0f33;font-weight:700;border-color:var(--violet);}
+
+  .panel{display:none;width:100%;max-width:340px;}
+  .panel.active{display:flex;flex-direction:column;align-items:center;}
+
+  .pay-note{font-size:.76rem;color:var(--pink);font-weight:700;margin-bottom:16px;letter-spacing:.03em;}
+
+  .orb-wrap{position:relative;width:220px;height:220px;margin-bottom:22px;}
+  .orb{
+    width:100%;height:100%;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #4a3572, #0c0718 72%);
+    box-shadow:0 0 50px rgba(185,140,255,.45), 0 0 90px rgba(127,231,222,.18), inset 0 0 30px rgba(0,0,0,.8);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform .15s;
+  }
+  .orb:active{transform:scale(.97);}
+  .orb.shaking{animation:shake .5s cubic-bezier(.36,.07,.19,.97) both;}
+  @keyframes shake{
+    10%,90%{transform:translate3d(-2px,0,0) rotate(-1deg);}
+    20%,80%{transform:translate3d(4px,0,0) rotate(2deg);}
+    30%,50%,70%{transform:translate3d(-8px,0,0) rotate(-4deg);}
+    40%,60%{transform:translate3d(8px,0,0) rotate(4deg);}
+  }
+  .eye{filter:drop-shadow(0 0 8px var(--cyan)) drop-shadow(0 0 16px rgba(127,231,222,.5));}
+  .tap-hint{font-size:.78rem;color:var(--text-dim);margin-top:-8px;margin-bottom:18px;}
+
+  .result{
+    font-family:'Playfair Display',serif;font-style:italic;font-weight:500;
+    font-size:1.1rem;line-height:1.5;color:var(--text);
+    min-height:70px;display:flex;align-items:center;justify-content:center;
+    padding:0 6px;margin-bottom:18px;opacity:0;transition:opacity .4s;
+  }
+  .result.show{opacity:1;}
+
+  .btn{
+    width:100%;padding:14px;border-radius:26px;border:none;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.92rem;cursor:pointer;
+    margin-bottom:10px;
+  }
+  .btn.primary{background:linear-gradient(135deg,var(--violet),var(--pink));color:#1a0f33;}
+  .btn.ghost{background:none;border:1.5px solid var(--text-dim);color:var(--text-dim);}
+  .btn:disabled{opacity:.4;}
+
+  .field-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin:6px 0 12px;align-self:center;}
+
+  #resultImg,#resultImgQ{display:none;width:100%;max-width:280px;margin:14px auto;border-radius:10px;border:2px solid rgba(255,255,255,.15);}
+  .save-hint{font-size:.78rem;color:var(--cyan);margin-bottom:6px;}
+
+  .q-view{display:none;width:100%;flex-direction:column;align-items:center;}
+  .q-view.active{display:flex;}
+
+  .themes{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:10px;}
+  .theme-btn{
+    padding:18px 8px;border-radius:14px;border:1.5px solid var(--violet);
+    background:rgba(185,140,255,.08);color:var(--text);
+    font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;
+    transition:background .15s, transform .15s;
+    min-height:64px;
+  }
+  .theme-btn:active{background:rgba(185,140,255,.22);transform:scale(.97);}
+
+  .q-theme-name{
+    font-family:'Playfair Display',serif;font-style:italic;font-size:1.4rem;
+    color:var(--pink);margin:4px 0 14px;text-shadow:0 0 14px rgba(240,168,216,.4);
+  }
+
+  .cards{display:flex;gap:12px;justify-content:center;margin:6px 0 18px;}
+  .card{
+    width:88px;height:136px;border-radius:10px;
+    background:radial-gradient(circle at 50% 40%, #3a2560, #150a28);
+    border:1.5px solid var(--violet);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow:0 0 22px rgba(185,140,255,.28);
+    transition:transform .15s;
+  }
+  .card:active{transform:scale(.95);}
+  .card.shaking{animation:cardShake .6s cubic-bezier(.36,.07,.19,.97) both;}
+  @keyframes cardShake{
+    10%,90%{transform:translate3d(-1px,0,0) rotate(-2deg);}
+    20%,80%{transform:translate3d(3px,0,0) rotate(3deg);}
+    30%,50%,70%{transform:translate3d(-6px,0,0) rotate(-5deg);}
+    40%,60%{transform:translate3d(6px,0,0) rotate(5deg);}
+  }
+</style>
+</head>
+<body>
+  <div class="kicker">арт-пикник</div>
+  <h1>Гадание</h1>
+  <p class="sub">Случайность тоже знает ответ.</p>
+
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="shar">Шар</button>
+    <button type="button" class="tab" data-tab="q">Вопрос</button>
+  </div>
+
+  <div class="panel active" id="panel-shar">
+    <div class="pay-note">оплата перед гаданием</div>
+    <div class="orb-wrap">
+      <div class="orb" id="orb">
+        <svg class="eye" width="70" height="46" viewBox="0 0 70 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 23C2 23 15 4 35 4C55 4 68 23 68 23C68 23 55 42 35 42C15 42 2 23 2 23Z" stroke="#7FE7DE" stroke-width="2"/>
+          <circle cx="35" cy="23" r="11" fill="#B98CFF" fill-opacity="0.5" stroke="#7FE7DE" stroke-width="2"/>
+          <circle cx="35" cy="23" r="4.5" fill="#F3EEFF"/>
+        </svg>
+      </div>
+    </div>
+    <div class="tap-hint" id="tapHint">коснись шара</div>
+    <div class="result" id="resultText"></div>
+    <img id="resultImg" alt="">
+    <div class="save-hint" id="saveHint" style="display:none;">👆 долгий тап на картинку → «Сохранить фото» → открой Fun Print</div>
+    <button type="button" class="btn primary" id="printBtnStd" style="display:none;">🖨️ Сделать чек для печати</button>
+    <button type="button" class="btn ghost" id="againBtn" style="display:none;">ещё раз (новая оплата)</button>
+  </div>
+
+  <div class="panel" id="panel-q">
+    <div class="pay-note">оплата перед гаданием</div>
+
+    <div class="q-view active" id="qViewThemes">
+      <div class="field-label">выбери тему</div>
+      <div class="themes" id="themesGrid"></div>
+    </div>
+
+    <div class="q-view" id="qViewCards">
+      <div class="q-theme-name" id="qThemeName"></div>
+      <div class="cards" id="cardsRow">
+        <div class="card" data-card="0">
+          <svg width="44" height="30" viewBox="0 0 70 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 23C2 23 15 4 35 4C55 4 68 23 68 23C68 23 55 42 35 42C15 42 2 23 2 23Z" stroke="#7FE7DE" stroke-width="2.5"/>
+            <circle cx="35" cy="23" r="11" fill="#B98CFF" fill-opacity="0.6" stroke="#7FE7DE" stroke-width="2.5"/>
+            <circle cx="35" cy="23" r="4.5" fill="#F3EEFF"/>
+          </svg>
+        </div>
+        <div class="card" data-card="1">
+          <svg width="44" height="30" viewBox="0 0 70 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 23C2 23 15 4 35 4C55 4 68 23 68 23C68 23 55 42 35 42C15 42 2 23 2 23Z" stroke="#7FE7DE" stroke-width="2.5"/>
+            <circle cx="35" cy="23" r="11" fill="#B98CFF" fill-opacity="0.6" stroke="#7FE7DE" stroke-width="2.5"/>
+            <circle cx="35" cy="23" r="4.5" fill="#F3EEFF"/>
+          </svg>
+        </div>
+        <div class="card" data-card="2">
+          <svg width="44" height="30" viewBox="0 0 70 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 23C2 23 15 4 35 4C55 4 68 23 68 23C68 23 55 42 35 42C15 42 2 23 2 23Z" stroke="#7FE7DE" stroke-width="2.5"/>
+            <circle cx="35" cy="23" r="11" fill="#B98CFF" fill-opacity="0.6" stroke="#7FE7DE" stroke-width="2.5"/>
+            <circle cx="35" cy="23" r="4.5" fill="#F3EEFF"/>
+          </svg>
+        </div>
+      </div>
+      <div class="tap-hint">коснись любой карты</div>
+      <button type="button" class="btn ghost" id="qBackBtn">← другая тема</button>
+    </div>
+
+    <div class="q-view" id="qViewResult">
+      <div class="result show" id="qResultText"></div>
+      <img id="resultImgQ" alt="">
+      <div class="save-hint" id="saveHintQ" style="display:none;">👆 долгий тап на картинку → «Сохранить фото» → открой Fun Print</div>
+      <button type="button" class="btn primary" id="printBtnQ">🖨️ Сделать чек для печати</button>
+      <button type="button" class="btn ghost" id="qAgainBtn">ещё раз (новая оплата)</button>
+    </div>
+  </div>
+
+  <canvas id="ticketCanvas" width="600" height="840" style="display:none;"></canvas>
+
+<script>
+  /* Универсальный тап: работает и в Safari/iOS, и в Chrome */
+  function onTap(el, fn){
+    var lastTouch = 0;
+    el.addEventListener('touchend', function(e){
+      e.preventDefault();
+      lastTouch = Date.now();
+      fn(e);
+    }, {passive:false});
+    el.addEventListener('click', function(e){
+      if(Date.now() - lastTouch < 500) return;
+      fn(e);
+    });
+  }
+
+  /* ===== ЛОГО ===== */
+  var LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABI8AAAMWAQAAAABQQJuqAAAnVUlEQVR4nO19y47ltpbl0onojNOAcUM9ag8unPqEHHpwcVOoL4lPyEEPbgMFm666QHvoYQ3jU2ijBjVqxCcoLzxwzZSGgT6ROBHqgSQ+9yY39YjMRJ01OIfiY3Npk9x8iKKqAZ8ZhsOnZhDjQkmCCyUJLpQkuFCS4EJJggslCS6UJLhQkuBCSYL/opSGqlIF0av9ZyiPR6B6Fkd/gRnK0xHA0MgT7K6l6aavzuIEu1Oq5pykCXYvuA+zQ4mT7Kylp+vZ9boTJtlbS383rl6cZl8tPR6N8+YkTLNz9a6sU9zk9i24945bbiv31JJ/v9KMdtXSP7wrJU22J6VmWbIdKT36l1qabkdKPy5Mtx+lR7Uw4X6U/mNpwt2MQNSWpZ3cfkbgH/koDHaj1CxOuRelx3wUDntRWmoBsFv1tkM3g7dalnSv6v3rirQ7UWpWpN2HElW5W2nifSgtttzAXtW7Ivw+7RBuhVHCTgX3G+FHKY7GLgVHZf9pZyhPlGdsOznsQYm0k0fKk8QelO4pz1qcfAdKT4ryvROn36F6f6gp30+6vvQT5Sm3ATtoib5L8cLJHlr6SPp+LRdQQumxagjfoaq8dW3KdJfUbmCQQ+Mq9pwK5K3xIHOp5Lk8l9Slimg3puSH0MODvCoV1aUnEOMwM12brTNdlb6VZ1NSl/4A0AV+j41xqfGfVofeh1KPuO7+GDkfqKRXBYxKKHUAghGG23dM4zZNJf1qJ0oa0SLov7sXDQBm/e+dPJci610BQZPzJ5DjIG3V8A0oanEjGeV6+QOjJwWmdy0qt4KCG8tMu16NH+MezPL2uwJCJQU3PnxwF67Cif/VmVwMKCu3koKLDU44oCXH3AD+LOcDlBRc7/yOuA+jtJGVABDb1xwKOl0AuLUece63phd2QfTVyW63dLzkZPlHFBj7AMXlVlBwGoBXMA9RFLIyVV0JH5S0uNEGOq2HMIpv9WM0X7vtyxitGOhSKnkg/N6VChZraSJvt0XE+gBuTpFvweDNy0iAyCxTY+yP8dS/ZPA2orTgrFK7ZKhBW5hBAaXICmkqVkxAybnMkFqwuUp8P1s0UtrryLvMThaZyrCW0pToSVwZxJT64Jru3c8Fc38OxXZJT/9025bvBuAhptQF1z0Za1BqMZUZi613R3vrdqlAAzElnbme0DVLmRiIO5S53s4jXaYe3/xn7XsUr18t7na5nM5lsxEKUkohBa5pFY8JYxRL6NPBQ9GuThJSSqFW2HmQulvMZYKUkngqpkuH2hGKC+7k/cXorrrFZEZIKRWMDb8BME2xFkH+AMhHzwesXUrffN27dKgdQ0qpnx25el60JEFiqZY6LmD98ERKiaUQYv0zme2foSgAq7ZTSCnp2ZEtGO1fKjmXCV/wGxZKLLFbQsPF9lrq1woQUhoI114QUiqwNqvN99KCa9iQ1eZbSGl9NyFHuZZUJnx1jyKkFFWQOpMgF57A9kZgdZMUUupDj8RGG7WMiUG5lvSu0SGm1IUezgD5Jhhol5PwsUFd+hZ/XS/EgZCSTqRrUfVuULeCTiBaiDFHf+Fk/dqEAyEllfa5cq/6pVwmLK5LrXd1t5KGCxklwvy98a4KtidlUa6lfvzzbeWN4147OpFRIrrSV/6lWsnDweK6FCxt3Vnn2oGMjBKVy513tWFlKtfSXFV8EuwKTFecgYwSVWP9yuTIWTuGW97H+ZVpg8c5M2SUesqz9a7USiIWK0YCjXd1Z1xrh5XllJg2Xq/j4UBGqduXhI/NpgPyXe85yCjpfBTHMKlFTAw209J2sy+ZJOW4t3h8m8RmN7edrRRRElkatYqHAxGlwrLSC3g4KC+4SGUTg3YdEQsRJdGgrKG9eykTgy91kXn906MSLNCSor3rNTRciCj1W+UmwpdalzpJJDsUEEXn8aVqSSeuNrSRE75ULamdSfj4QrUUdLTdHjwcbKclf1WgXy5IQmn3oa2PL7Qula5hNQt4OFigpX5djllIKL3scOlLrUv9mgzKVbxAS3uXo4RStzOHANvVJWsq2nWCJJQ07d2vy5nFF9rilH+5986KL1NLxYvGagEPB9tpaTNzJaAUDpf2Hj59mXVJ2ML62ZFctRyqOifohbX04YAPbSbOy1J6rJE/wkpAKWxKy58kPR0B7qgIi+201OVFjvOqQaUFCSj10/9dPqpFR/jNB8bqdNICLSl5VBLmaI0uHU9AaZZQp6Pp2cE8DB/MmlifFiSgNOVlzY3KpyHwi3Flup7tqreaHfTDwqfWODO2V05pJfl/z0eRZ6REgjLWylFSrt+W3/u1KRDtB6ggYk2llitJQElorNO37iopJ1GuJfEj7obwK1CSgBJ7+513lWxGQytjA6BES7U0IpH97+JcIKEU335HRUvav59kZEbItdRI31tTkU+u7/eRpyScefSJsNwIycdmHUo3O4Kh9xmlR6HKKbVFclckzVPqBT5wTPrBvwR/vA8DuZbU4uCwzWb2guQpddkYgNtJxA2zcGou1lK1vCU8lOWZz0dHPtRd224n7gtjCUmIbz0TMdXFqeA6Y3PzlEKBNKzm6jAoGotkxhRiLYlfg26yMep0cJaScATXG1cbBkWjmyYtSqwlR9uFR4jJTtuxyFISrrnZbFQuam7XnFhLdVqUIZLfpvenTPiKkYB2OJQs8LzJhGcpyZYFbfHGAkPLqjOyxFpqqPwNLPGsscie8JmlJOszbazs3Cr7/pNYS20ytA89lHUGJN/lcspSijIj0RlXnYnpvZFFQqyltCRtXE1Gzl+yOS0xAkSLV8bVptNe6az4LKVu/KuQUpQzuuYjARAdy7jNpClpvFyzIDmWMUtJ52W4NoDoT9wsvhMIk2opHa8XxrtVq7MCXTciv3vjIoy3VZz/5ioHqZaS/YSzDEEZbxMqG+jkKIm6eCermgi+m/6/l8ha2OJ0cJ0ZLdTj31slk56jNCvgiIQVdA47bIjgsaO91TJGa+ySMq5769kSEa8A4HUvFpw5PXIuk9fDYF+IfzsMgzk6v/IO0Z/TWT7DMPTekcC58ypzIy6ymnT+pdOd0F9EvS160CktuMa9eO+HOYcMb9E/5WTQg0rf+jxY59KjwVxIb6v1rvyP+jlhW7wlt1DT947bXferlzMxyFHqp38Frz65x66651XfrSa0WEvuSvaD41bLmRjkKHW0t9PRuo9sNnlJTqilKC+9RloaOSF01pz2trAB0vuKovVktE3elM1RUkXS6qU0XCwt/RM5uGtWMDHIUJrzvQYkzwn0OjIjModLzofa3pyCA26vzsR5t/bUdhtY9rUIQHyO7hGSB7TbzFMzUtw5RZ0VtokNkN5YLfrAoD1BY83eS/mjEcHT0GYFEQuhlho8tvlYeg0TgwwlO6gUKGmjN9OljUSyRWOjp+lCMa1ki8ZGZ1VlKPWzoxbIksQRQKil/y2JdLeCh4v01FNPsdow2RXxeQZiklz8GRv51xl06EF9+0gmKosMpYhKAludxLa04RLjx3oNDwcZSooLIPK/W0XEIjNeYg3y6y4a17iS7He2dhsvRWgin61qd6bgeBW2kc9m5wymC45X4hCFud9M27Hg2JFYFYfdFWbNIq0l6mtwAICrcxhWeRT30xIrLqb6ioi1DAtbXHxY3nbH56UpsY+/m8jnjolZPmtZqKU29Fj/gQ8rKlm93zdMwBBW/eBrYzZw68+QdYx/bKlf7CRGzfjHFeRuNRODdMFxve7NKSi40PrsVnDsTtZotLTlQbpJSnLD+2YtDwdJSsnvnHl89QZUZiQp3UulbDZWAtLVm69ot73/ecToQ5F7VW/5/vp3hdkmkdISa7tDLVXRuGovLd2zIUE2uW2JZUhQkr+q8WY9DwcJSvKqpNfzcJCgJP764qYmIEnpXipj9Ve+fPAtLlXzb05uiyNE2BZX+m3bVL7iqrRxuSUKTvzWz6bH6SNFqU2k8rrcehsmBokZthTNFjwcsJTkVqndgocDtsXxHRzGca1pcZSEXVrcfS7pbmcecVqinkk+eY8iP9STN7W8soeWiKr01w0PX0+BoxQXy5XekYYLjtJD5POXbTa55MFRakOPK+1c7HpGDUMprvT53exbgaEU1e4rvTCDujgFQymq3bySNnpWmRXYB9dXehOxa9J2wfWopHZFRnIwlLR/WWkq0k5gKCn/ctuJWgayQu/3JeFDROkm9Nj1G4k0pSDLb/dkEEGkJT39NwsyKE8joRSVWx5rxjESSvTWxH5FrklIKNV7ZU5DQqnZm4SPzTvN9ZBQavcm4YOmxDSY2rhUTm42Ag+JllaIX6JiWbf7ohBo6YWmbwYMpVYuYZstpw4YSg0ZpWCHebuETJifh3q5xNVgKG33bapyMJSuGbcYzexQxUkZSleJsL3BZauBanq0+9KFyFH6FvguGmFv3t5JcJRutPQFUhr18qRsfXmrN5C+yPSnqvALfyhihqBVNYSfziVa0Sa+sFFltJliAf99krTlUlfZiy+s4NY8kpjlLtCWQEuqXOoqFBVcgd1bMTpOUepFEtIWaIF9ymtp4f2qZcmwY4trx7+6PGWKUhfFUOUZlGM3LTXeXwl2o1QvTpmipAH4xq6VCz4Wp5ixd4eiypPsRml5v5uipAD4xq5x3HXwTwpeYtS22u8doVosPp+mXiAVmBrHkuJLbc9bRmVGAywbgpdpti6NW5JgRp5Ss0AqMO20uluQsExLVDk0TNwrYFmnmKA0zSxbJjhbTfTCbXILjYASxHlTtE3uZ9s4+VdDz3GEs5Nqniy8ZQUA38vfQzWCUm+kCrfpt2zIULD48tHuvCkruMJi1vKov9k5WjYTtpfadv3r3u5zSVAiZpZV8L8dlO0tCotCibzKMTiSspTYCJuOtD4CpuolBPeEX7sDHWCqJJ1QuF+Lmyh8m2rVO+5l93uNjat4BxheWUp+V1ZH4duUoQZME09I7Ai/o/OnNiEzwpVVeJNTzaojn3UYTdLUg2Up1WxIuwWZEd4Ke4KSJvym6I312fChz7OXB4/Gu5qaWWtD6oX5/9w6F96go7TBKPs7kmmW8AGG1v0okdedJigpyrO1zlVF9tF7kbMHYPrdrJZa/7IB5uK7psKlOHm33LlBpQVXA/Nb8WNSxcVM48F7FUB7YfxwmAw/A+YgUwCoxKNrH8o7DtXlkhh70/PvA2BamcKq/oR9+MDex2glIi0omIlHh5KTX33APU3n2eXynHvzK3p/4n1j/D7UwSEZeTzdnI1wK3p+H2Ow+SYQhX9tz3z4CsWT/l+fFIDRUFtlBNOzTMHFZxUpO5lUxbVb4fUwDFMr+X727V0uzzlKN7G/ZdlPGcgxCzx5lDqPUvnYorJqFp4ifDaZPHmFpGdH58ZONOJRSxt09MN/q2fn2RuHGCZaSGkz/G6PtT3Nldq3SaqIUr2eUu+P0JQT4GMa+byAljrb3HtQI8OgRuYoNWsJAdoOF7rZr3cjBNb4BbSkLBUNt3nNFSqwlDlK7WpG8uXziQvfx40dz/oXF56u7auEFSb3+wb2qIH5fcTxZJLFZ3mVIRqHdIAtsH76nyxqhtIGE3+npjAq7/zLDCWxEn+oU6FuBY5Hbnr6n3oKvo8rKtJBsfp0KAStndlFlslY2it/LPzCp4c5ZT3+ZShJe93fCKs8ie5h9HE2P27ksIbxlCpA3sV18drPB+kXbU35NTlKbqws2rgTfYhftKXnJKbut1lKCmLjPRD56WlM0oFr/ZNvmDCjJSWjRLUdJd2X2QeZJSi1ckt5RjzNIHTThx4AbCWcM0tQauS2iagkz2B0zOruEPwTqOVmqY+9zojtQkcmDmMlKB3lR6t1iO7eKC7M0YFyfu39Jyi9ks9lmWy7IHMymqlxs1lOUKrUmlP6egj39xnt1tN/qgJ/L95drUqjpRJsMoSjLGEH4fZVYzya6X8TSqv2qhve7fS/CSXqWbmO/elupZ8davpfTmkQDlxUcB0S66Z/01Msp/SL/ebPSSYpKl9tflwsp9TaVeJ+djz5mhPVMRUyWUzpyTnsq5sdv9rvJSgUwnReiymdndqrZ8e9/NSmGZHxXk7p5JSLAsa7VH7PKpkqR8Z7OaWeyHFIn9xGWs7IUi6n1MHUl5HaEXi2OQR0NSsn5rmYkrYZGd2fFxjyfna0qykBpqWNmqmzfVofenRwWqtaTUlReYQFpuIIHOwwfyklN+tROc1IMcGiozx1RGRVwU0F1a+RoaZ/O8xPUHqsGj7QrcYdAKAdHVpMAgBlKROUhiP+kRFe+CV3TfjFljJB6R+y77KYrNTuH7J5akCd6OVhukUFMBNjPTtaEy9AbLx5Sn8H/G/6MaLCdt+zSUhEw1ye0vh0kfjmiZtgJPOcFBTGDtDPDpWlNG6/iFf7fh+a0GtU2PUkdrptUcfSE8NcltJTO/7rMOBBfkprCJLlnIHDg6H06/TfhQFt3PJHvax8lugsiDCUmum/D/wH/2ZVHMdj3CWeczsS4N0RTYn95NgzUb86AEufJRrCTnKa0o+zIxxuUKtG43WziFK4mstSmvYXIFb2CXH9Ut4V39Tm29OOX7iay1L6lfIEENUtR3q76EGZKQWVpuSYnvCeu5jWEMlk0CfC3O6IovQ7n1Qjql+rlk16wo+i9FOR1LE6mNssKb2TqZcuDYKSrdxxBgqMfaFbbu9edEQEPf27S8eEKL5yjwi2aKw6vFZN/67tJyg1vASqVHoAohVynQirHXdMKfWxyGcg4tUBcG9TpWgFMKKaJCX/EO18BlqaPyHK1IHW8YwoJcfbZ0L2eFWLWNHygs/gRJQSRimFJhuDqodk04goPaTEEiKmnFrjoVMCAvQUi5ASVW6PQSSbab/OeJ+7yeG115ASddL4f5ghUk+IHf9UHBIgxd0bkoaUqEPr29Rh32NZRrO4xJtsnXXq6b9OUKLKbbDa6UKZcxAzXnbrHkVSTf9NghJVbs/06IuMCMkXng3MLvQ2QYkqt7OgGFa++qF4SqSddJaTVRyqAYimTInu2a+JPiXyZP8+Oe1XeTJZHBJX8UxWuZUjMsDmA+V1Pt/ecQeC/GL3KTWcPJXJz0nYc3F4+MXuUaI/qKWNi7B2mVegZai9K48SP57UXED25V5zGx0fp/GuPEr3ZAIV5u+2nVMYZwlalpI7D5gwN8+Ok9Z70VLQfJCfr0uJXgZ0WgdrWlwpuU4krv/BDbnCHrgcE+jEMRUbcuAvW15e7/x60AAE/QnPJ07tUGKmJukx2piXoD9JzIKD1A4lahHS12k3/uW3uJahZvO8XyDt2RV6dn5L0PiXlhK3fZR6SyMMbKKACInybzlKye/7MM1/ptvSwUKo4HoIX5nxcDW9WHMzvWsze04nU1z1rpCTCXXc02tVg72p28H/0nrwEpLzftw9RSnXuvtMuAThuN1cszuRk4s1HYC1G9XD2zaUBJ+KIlq89oUAcz2OboS/s3BbopFW8GjEqQkKQOlkICTXcJTuyeSeYY3bMfsR1Rg9G9KGHt7bcBFup/fprobBngVTDW4Dgnnh8mRC57fwKtviOhP7JsgtfP9u1pLkq2OsXa4FiTsuIGobMyWmKtWuxtka2rgXpd1eNHefPe4LBXlo1ySO2sZMSa2RKoEWx5woiZpOzwWogrgRorHWRIl7+t5QnmFtERlvxQXUocdE6UEitWP8gwqqUnFjNIy4VkJEMzEo4x3G5dthJPWQSbAUShoxLvWREvvVsVaSDTEZSD318C1uvKQ4+sRfHWv86+Q0pY69otU8VkBc6iOlh8C30l2cmC3dxr/U4l1GAKXikVIo4RuxRCo1snuxHNSRzwEg7r+bHcrxlD8HiLfK8F12HPUAxLX7NpOlSl76SspN61qaUli7e9daGBcnPGzGHaEkfhShaEoPvl/h16vCZtz/UpCY6IwOQGRA/0an5m40bMYfWiLjnklMPOk4IJov3SjM+hR1qFt/4+KAqCl9u3EWSRDN+ICo3momdc/417MjLllrXTqGBWF/D5Go4k+zNaUJPKjI54Dw9v8GeORNms54aS9BK8lZcwH3JKXO9bhSQejOiKdGBwR3wH+NXTP+ajEdgDLAkR66UpmyZRPFpSEmInYlC4A5kGbifjWHVl60t+4E3D2vhpB+GpO7fPws3xITcI+Sb5Q2O0w0MZLuQo+g4CpdLHUt7ah+H3zTNX8MtWCleG1/Eo37Ay294ZNyI7hakm9i+BetSB48jRDllp1PNRJKKYR5+lqaj8SiBiLlq/5M4vAmH5KUQjD1pHMvWgGjJML1CHmXwY3g1FIqM0JjuboXkxnv5OK58i8ZSr3IKyGgBPebS5SgTwUGxlJOqaO9N+hzAmN5SAqt83PcLY5E8y8ZLXWxl6ZjyrboEvIctN6VT0luDg2TVRZ0woN3dRBXJ0V7yxYvdDLUN5YH2rKkRbgoWVNU3p+FbywPVBSDRpA1nzoEb1Vb9+IQehRDSyKpdPCDe3FAcpBkwdaZTpI6g+ho3z8BV4FgJRfXi2MeWi7EM5YHAFVf8U35HPxHLCSGKdcGvJHlAQBuuVJpBdnJDVOim7h33OI+jlWGfFU10ff0jnum1HkxSozNJg87XGO5weBErRfhGUsxpZ4N0bFXRe7NqBPiW+sUU+rYkIfZYevKd3TDaMY/nRKSo6SSoRPiin9Lp2tkQmZK2otAtCIde02IrEDVl084HWOZLbi8JYz4cw+F2oQQp92K65ICGGMXPX3upDJdtMZVZgRoY6f8y1dkpDiej864ltql3nFrP2jZBMHOnOjdFHG/NZZOTUrr/Es6Um5ebOu3VEupnozaQlOPf0oo3h0MJClF99WQ0YRjgczd36fjxS3/nAhe/qaV+5myPqAk7M5b0leY2FiQzvop6zSDAWFd2qDfIdFapxkMZCn1498plfe9KPsj0RYbxz0L32Qxp2ezycHdU3k//dOUetqHsyxTdS9f17l2k8yZTpTWfT5eZgVqws/VyB+EXwpdKnLBjs8Art5ntfi58C8WpKEkkRrKU1vnbL+luWogUVk0F5BF47jvx7+lLa5LXDFoKc/acffj30QpqKBxFgpIDDsWnxDjiTx5lHh0EsGiJqfm/HvH060LH4WURqSGSwgOF2plIke4Ha/0o0giSM4bZ+ysitxJSlaroxoaNqZmQ+gZjiVyF0k5kAn5HBh0pQkMasf9AKCw4Fq2GguaHJOT+2XXUzklHssX5F0CHyMfEtpxKzaWoNtmTL9b64cEJT5vBkMoXQ4d5jtR6iWJU1m22dSU6T/Db8baobQanYAAXXZ1KKWEUipuXyDHtzhuk+tz2bAg2hd/zt6MmvF3GRDHFk/qZiZmrt61Gx9Tk1Owv2K4NfTsUOrI2Nk1EOer1NmsGy5AW+ezQ0kEbms2gDWPqxrrHAKhC+AovUOGFhvozuUUyijVsY8yzuUDy7CKHqyThmJDAPfWuV7OlDYryB3FdWC0xPRYDScUGOdyyQhcZh7Zno9Foo29HBKzYKbbSfRGjtxTISUCtXXei8+FCsv4jR9UQknFXo5d6NOJ/Yxa98LpUp5tTCI3EZzWsvwwtkPycsSs2drzpWqDk/xj2tonVnqck7wGjpIcDs2Fn4QH0ttg6lRCMi/lCk6teaU02HjyNtzl1WVjcIbA6VJ0/v04J4TUQWudvy2+v9QxPuVorPM8aoEpvToh5Mq7IinR7dmrDSrOafnyoFMju/VacnkqKLD1uElc+d/wKaBUU/m4xZT+XEQK3pECI6Xla8zuLY1DppqO2FpnnFvy9LwEGsrTH8yTUQTw6vdqu6Ss8xk12EGTCiKzUmhKPZmszfkO6hhG0xyHAHcspSaVTJG+bhJ9zUbLLGG49XukxAycG9rbQ+24Hw5x3rTlrINr8yC/KalLzH16C9eV4gRm8nFPGl1Uvd1W7C9c3y3d2dzafzklwe0P+Jr7vluO6ZtsRga+WSM6P68825v0EKVlQ+bxt5opScbN3H0qx92xw5xj8tIYywqMlroUNRct/DvnZ+F1TpQ2rsRcJgA3Um0c94rN328AjMZg/UC3dtx89904brJwx8p0LKJUM/6u9phXXmNiccUc3/GsTYpeTCyGJ11xsdqsnLv5R66lhvH3JGgutSJ93dv5BpMRX1+XPMPUCRMR2Vbd9MYgSUlTni0nXjnu2ApUzm8a3yxa9w4NgQL8sQ5nBaZs6vmaolgNqcc6FBQXUDvudRtFRuQomdvmVZ+xAgDY3og0vz4l5Qe2LA03ZqaTV2TeKvQIKXVpqTZiNiSRFYRbLjdYOfGKVEfBLUCY/paXJ6ZEFU/F0YjQeFdqdtRU3C3Wl9z8OjpKO/7Z+2rIaADyS2sGiWpQ80Fs5jUfNlLSSaE5pCttDZStGIsLruYTU3vsfMTf0x5vo11FKYAr7IqLZDKPc0kYMy9yqnNsCL9ZruKDRhd3FBWRsEBL7cIwHGBrm73nxN0n2OYx59SkIlUg38BT4HiJtaT8S48FM8OdoB01Wiktm/kqU1lP/+mOt/E/d2J8uXRSSslhYbrJfW1OvJjVpTDeDm3QlmqpBpzSU76/j5sfekLAkY4cUkrwS1O/S4Z+Z52Ncb0C1ywOQMFbd7bwj4BTa2upABuxUqzxcI+Hnc+accLmNZUb99yaavI3h8rYWcBb3yc8faY3eQ5deBhzfCZzGbiHQ206mVOh/+zUekaYBVWOYeM4wLPFKs3EwLmTq66XU5IgWJtqZ4cSpgXwmgmWUqoJP+eW3/i5sZBk58VJWOEm9NBeYc5LjbksJRPxA1AwR3VybLzOdLbf4U21oQSFLG9pwUWya99PjX/ZiVokJ0aKUlLLX/nN7N349yYnt0F2eizVkgo9rpRnVqbKpHNyamRV6VHKqt3V2/e9GzIuNaaHBIC/i1JCScaFTnQny/CAbI+42W6KbwBToxKoVPaZWorSgXRyefXAa5WNhrtshTsAJYv6iTxvu/CACxJfZyucsOAkT9leE3emIp9XiVMM+byqTPgqVNnxoqel2g9z6MzmoV1JSAJhwdWlcld81qLQCDTLcxIjRckx5o0XIK5gi3SV09JmplQO8nGZiqK1038tFhzLkCKlBSf/5RmUo3BkenR+N5BenKgxLkNsc8tJwKPUBv/AVGQB8VoguM3G4HAA2J0LVqpRTmFJLFJqNo/Wu1phlMUgKTXjnzIeRzI8iYZIJ0PiyVVlRddMlF0gqxyNcbXmJ4Pa/JSCpFQ7QYHUBthbVS6loO6OzcVfbkMdx6NxBBYOHEgtuTb6GkhU9D1AUhr1U5sIlR8kqn/XwEJ7eWDcmLVewTsr6ADRjHUSphZTolb9zC1qL7xSwnZUYbFhtR/rcg4PNyHDMHT+umwXL9PSUK7AAjzTlBTs9/hO/ofCgkse2hypXkjJrT+2k2xhK9CN/yWCV9IPEzS5J1Ac6L66gVOB/Llgfmo4oc49x+BQDQAex+xv+9n38Qi81YsEGjxdV4v26Qy0jXmFtQ/qo2U6OVxKtXFVqvxTFhH8ZTo5qgHA01ijXnfG+/G4/QeuhGAKDjefjJFfcM2nIuHjE0ywcziYn5dZPBLgM9RSNcBU8k9YpR2MZOQ7RF8Cn2HBFS23vwycnTkvsSoigaOaF5h8iOANsz8PjJQaYOFseQf4D5A/CzgT//YT0nAxDqUfj/hcjPfclVxD8lz2hXAwv5+LWZooVfh8zNLc4pTw6wMvgWmm+L75XGo3honS4/Fqi6+IbIF5hnKj/vJpiTgQT/FfDNw87lPiQkmCCyUJLpQkuFCS4EJJggslCS6UJLhQkuBCSYILJQkulCS4UJLgQkmCCyUJLpQkuFCS4EJJggslCS6UJEhTemyMc6jpKIPkcdABeI9H9aSGBvihBaoa+KFSQ4Mf8QFPLX6wL5MeAOB9dcD7A4Cfa6A6jomrA/Dbr6iqeqhq4PffI77VNT7g90cAVQUc8UsQ4edrYKgq4HFoAXXSZw1gUA+YPjChp5Nazh2cjW5GS92ggPYPAB8BPT1QuZ822P0BPDBfGXoYH8CSgU+T7294QI2+BQB8xB9IHk3sFNw9nvAM94HqoCb3M6CZb+lpe5iQJgIBAB1OgJ5on9zvXQBAH7xOYShVpx7n22GM3QI4As9Xo8w/DYBi3rVXvfFXQVDVT2z1P59x7N5PDG4H4KYDbob5Hnr3YqT0+v0z8Ao4vdMKt72GBvA/n3H+87cYbnv8jw7DzZ+jV0PeamC4+tNp2pEZPSA6fIVxz98P//qMa6Oyd1rh+LV2InZ+MmCSVgG9eqPNE9UeODVmK+PzkWmb14lviB/6ORMF9P8y+ao34Zsv2ruyz3YBvJ/ptPD/a6COs24BPB9NebF7TYdrvMVhfp79M6CTD5KDe7/u3EfhvTLOc8PsJ68NlXPDZXJEg+r/mRwjPn/nKTmGRceC/zr+RbaxDR1WZg0AeK4B4DuT7rrzBQQSbXLzeZRzTKh3Mn72vknvqGauH/ZQEluUtcJ55Dep5GTkRbCUxnvp3cD31mHro1+llN0+MxfzsyniXxsnZgvg53kT+akGHivgsVJjzo5UQ2m4no80P42t8oNl+/6fHNEnr7H/aBv/fAPnWclPTesoqmmc+3msFAA13um5AZ7s5kCnLrXj3Z1+aq/7QK/+5g+Fmfp8O2Cg3AtPpJskMHhehwIAeFTq8KH2Y7nVp+fyD3tdBFuitBekHHdLU6pO/RQtPjHt9nuOxoQacJtyN/5d9b3DqgPwdi64m14DULgd1FgJna3TNt+bk/Gq1BG4tTWufqc4Mn+zt2Cb8kzD2xavOze7rzpcTSzq9742nYJTY+W7OQN37wC4R8hojhKMTogKVZ2clnTdM/mGcILOAJ5rHAG8Vj6HI47GozbVQGEye8/AbESYPHqFuYv755GmQ/CXKLpF+o0IovoCCtBjSRmjeR3tqusBDP/dNqzGD/b7E59SG/RTtbLublbOca47/fR7CKynJ/LUAjihg7FJz9ELsEEP5aUfuI9JnnDdD5Nxuva+GX8AVPC6YxWexlSd8TOe5/t7i75NFbNfvRvVt27gsXucXO3hZE7X+rfJMVrrP56uw29N/9/ZMUy9zHfDv+DcTN12ozr43VLAzlJ6ukZ9f6/cwOtfp9ODH4DHX2f93s00AaB6+l9H/PRD/ZOT7M0s8XBEUzXNtP9nbpI/tAqPxwZPVTuRxNzD+JSGa+D4/gcr+EOFw1MDAHjfqgpNcDNPY1L109QEqR3s9Uz+Gqd2lIWvo5gjMx1RAo64tpetl0sFaGbDbItpcEdZminJG3yNXk2V6Xp8p6wlpQWC3uAK134nqK4A4BmvgCYyl9dTKu1e+piCjiM3PeX4NfwDyVQwH/Bel+ve+q/PnV7bN+nC9++ex7jPV8Pwf4bhlnkB73Z4fj0M/+p66cwre8JXAtPIUirB4qPqdsSFkgSfIaWttnr+9G4bOXaP7meEy+5TES6UJLhQkuBCSYILJQkulCS4UJLgQkmCCyUJ/j/TOo+1jjybgQAAAABJRU5ErkJggg==";
+  var logoImg = new Image();
+  var logoReady = false;
+  logoImg.onload = function(){ logoReady = true; };
+  logoImg.src = "data:image/png;base64," + LOGO_B64;
+
+  /* ===== ТЕМЫ ===== */
+  var THEMES = [
+
+    { id:'dvizh', label:'Движ', pool:[
+      'Сделай первым. Похуй, как остальные.',
+      'Самое дорогое решение — то, что ты, блять, откладываешь третий месяц.',
+      'Решительность — это навык, а не черта характера. Потренируйся, бля.',
+      'Не спрашивай разрешения на то, что можешь сделать сам(а), нахуй кого-то спрашивать.',
+      'Идеальный план — это, блять, враг начатого дела.',
+      'Хватит готовиться к подготовке, блять. Начни делать.',
+      'Твоя идея — не бред. Делай.',
+      'Чем меньше ты будешь пиздеть о планах, тем быстрее они начнут сбываться.',
+      'Ты скажешь «а нахуя?» — и это окажется лучшим вопросом дня.',
+      'Одна твоя шальная мысль окажется вполне рабочим планом.',
+      'Ты думаешь, что «ещё не время». Хуйня, время — это ты. Просто иди и забери своё, блять.',
+      'Хватит пиздеть о планах. Покажи, блять, результат.',
+      'Энергия не приходит, когда ты лежишь. Она, блять, генерируется в движении.',
+      'Ты не готов на сто процентов. Никто, блять, не готов. Действуй',
+      'Хватит искать вдохновение. Оно, блять, приходит к тем, кто уже пашет.',
+      'Твой проект не идеален. И слава богу. Выпускай уродца.',
+      'Ошибиться — не страшно. Страшно, блять, вообще ничего не делать.',
+      'Аппетит приходит во время еды. А мотивация, блять, во время движения.',
+      'Твоя главная отговорка — это, блять, ты сам. Заткнись и делай.',
+      'Сомневаешься? Сделай на спор с самим собой. Проиграешь — блять, повеселишься.',
+      'Хватит собирать информацию. Ты, блять, уже всё знаешь. Иди внедряй.',
+      'Первый блин не комом, а разминкой. Делай криво, но делай.',
+      'Меньше мудри, больше пили. Руки помнят, блять, а голова нет.',
+      'Синдром самозванца — это просто ты растёшь. Терпи и делай, ёпта.'
+    ]},
+
+    { id:'change', label:'Перемены', pool:[
+      'Не отдавай.',
+      'Новая появится, когда старая наконец уйдёт. (вещь, а не тот, кто ты думаешь)',
+      'Судьба любит тех, кто не ссыт переписать план.',
+      'Карта в твоей голове устарела нахуй. Нарисуй новую.',
+      'Смена обстановки — не бегство, если делаешь её осознанно, не еби себе мозг виной.',
+      'Нас никто не учил быть собой. Скоро придётся научиться самому.',
+      'Всем, сука, на тебя плевать. Делай то, что хочешь, и не оглядывайся.',
+      'Никто не придёт и не спасёт. Вставай, блять, и спасай себя сам.',
+      'Если план сломался — значит, он был хуйовый. Сделай новый.',
+      'Перемены не спрашивают. Они просто ломают тебе ебало.',
+      'Перемены не приходят с комфортом. Они приходят с пиздецом.',
+      'Хватит быть заложником своего прошлого, ебаный ты раб.',
+      'Выкинь старые правила. Они написаны не тобой, а хуйнёй.',
+      'Страх перемен — это страх стать настоящим. Иди, блядь.',
+      'Твоя жизнь — не черновик. Хватит ждать, пока кто-то перепишет',
+      'Не ной, что всё не так. Сделай так, чтобы было охуенно.',
+      'Начни с себя. Мир подтянется, никуда не денется.',
+      'Перемены — это не прыжок в неизвестность, а выход из известного дерьма.',
+      'Не бойся выглядеть глупо, когда меняешься. Бойся остаться прежним хуем',
+      'Не жди, что станет легче. Станет по-другому, и это охуенно.',
+      'Старые двери не закроются, если ты держишь их ногой. Убери ногу.'
+    ]},
+
+    { id:'love-att', label:'Любовь Внимание', pool:[
+      'Тебя ждёт взгляд, от которого ты охуеешь. Не прячь глаза.',
+      'Сегодня одно объятие скажет больше, чем сто ебаных сообщений.',
+      'Не тот, кто красив, а тот, кто рядом. Присмотрись, блять.',
+      'Твоё сердце просит честности. Скажи то, что, блять, боишься сказать.',
+      'Любовь придёт через смех. Дурачься, не строй из себя дохуя серьёзного.',
+      'Старая история ещё ебанёт сообщением. В самый неподходящий момент.',
+      'Не гонись за теми, кто уходит. Дверь уже открыта, нахуй тебе закрытая?',
+      'Сегодня флирт сам найдёт тебя. Не проеби момент.',
+      'Сердце уже всё решило. Башка просто, бля, долго догоняет.',
+      'Хватит соглашаться на «сойдёт». Ты заслуживаешь того, от кого сносит крышу, блять.',
+      'Красные флаги уже машут тебе в лицо. Хватит думать, блять, что это просто модный ветер.',
+      'Если нет искры, не надо её высекать из камня. Иди туда, где тебя и так уже отжарило.',
+      'Если ты зумер — 67, если ты миллениал — 69. Чувствуешь разницу?',
+      'Вселенная не пришлёт тебе идеального человека в окно на пятом этаже. Иди и познакомься, нахуй.',
+      'Если человек хотел быть с тобой, он бы уже был. Хватит придумывать ему оправдания, блять, он не занят, он просто не твой.',
+      'Твой партнёр не телепат, блять. Скажи словами через рот, что тебе нужно.',
+      'Ты не реабилитационный центр, блять. Хватит пытаться починить того, кто сам не хочет взрослеть.',
+      'Ты так стараешься быть удобным, что забыл, насколько ты нахуй охуенный сам по себе. Вспомни, блять.',
+      'Бояться разбиться — это нормально. Но сидеть на диване и ждать, пока любовь сама постучит в дверь — это, блять, уже диагноз.',
+      '«Нет» — это законченный ответ. Те, кто этого не понимает, блять, не стоят твоего времени.',
+      'Ты придумал в голове сценарий на десять лет вперёд, а тебе просто не ответили на сообщение. Выдохни, блять, и вернись в реальность.',
+      'Хватит смотреть в телефоны. Идите на свидание, блять.',
+      'Вы одна команда. Хватит играть друг против друга, ёпта.',
+      'Скажи своему человеку «спасибо». Просто так, блять.',
+      'Вы спорите из-за ерунды. Обнимитесь и идите спать, нахуй.',
+      'Посмотри на свою половину так, как на первом свидании, блять.',
+      'Купи любимую еду. Путь к сердцу вашей пары — через жратву, блять.',
+      'Дай своей половине выговориться. Иногда нужно просто слушать, ёпта.',
+      'Выключите телефоны. Вспомните, зачем вы вообще вместе, блять.',
+      'Твоя вторая половина устала. Просто молча обними, нахуй.',
+      'Вы растёте вместе? Если нет — пора ускориться, ёпта.',
+      'Ты уже знаешь ответ. Тебе не нравится только сам ответ.',
+      'Кто-то попытается впечатлить тебя умными словами. Не ведись.',
+      'Старый кореш появится там, где не ждёшь.',
+      'Твоя честность сегодня притянет нужных и отфутболит лишних. И то, и другое — заебись.',
+      'С кем тусуешься — то и будущее. Выбирай внимательнее.',
+      'Тишина — тоже ответ, который стоит выбрать иногда, не еби всем мозги.',
+      'Кто-то думает о тебе прямо сейчас. Напиши первым, не тупи.',
+      'Твои люди — рядом. Перестань искать «правильных», их нет.',
+      'Помощь придёт откуда не ждёшь. Скажи «да», не выёбывайся.',
+      'Скоро кто-то очень вовремя напомнит тебе, какая ты охуенная (какой ты охуенный).'
+    ]},
+
+    { id:'resource', label:'Ресурс', pool:[
+      'Сделай паузу, не выёбывайся.',
+      'Сделал тело — гуляй смело!',
+      'Не суетись. Всё встанет на свои места.',
+      'Отдых — это не лень, это, сука, стратегия.',
+      'Хорош сравнивать своё начало с чужой серединой, это тупо.',
+      'Вспомни, блять, достижение, которым до сих пор гордишься.',
+      'Твоя ценность не измеряется чужим мнением, нахуй это мнение.',
+      'Сегодня можно нихуя не успеть. Это тоже результат.',
+      'Твоё тело давно орёт «отдохни», а ты, сука, не слышишь.',
+      'Притормозить сегодня — не значит проебать всё завтра.',
+      'Ты не опаздываешь. Ты просто, блять, в своём ритме.',
+      'Ты научишься отличать усталость от лени — и перестанешь себя хуесосить.',
+      'Плохое настроение не продержится долго, если ты перестанешь кормить его драмой.',
+      'Скоро появится повод отметить себя не за результат, а за то, что не сдался.',
+      'Скоро ты засечёшь, сколько времени реально уходит на одну любимую хуйню.',
+      'Забей на идеальную версию себя, нахуй. Текущая тоже, блять, ничего.',
+      'Хватит жевать одни и те же мысли, блять. Они уже без вкуса.',
+      'Ты и так, блять, молодец. Чужая похвала, нахуй, не нужна.',
+      'Посмотри на небо, блять. Оно, сука, бесплатное и огромное.',
+      'Выключи уведомления, ёпта. Ты не диспетчер, блять, в аэропорту.',
+      'Похвали себя, блять. Ты сегодня вообще справился, и это уже топ.',
+      'Тебе не нужно «заслуживать» отдых, блять. Ты не собачка на арене.',
+      'Поплачь, если, блять, хочется. Слёзы — это, сука, тоже детокс.',
+      'Твоя привычка страдать — это не судьба, это хуйовая привычка.'
+    ]},
+
+    { id:'money', label:'Бабки', pool:[
+      'Деньги придут через то, что ты умеешь, но почему-то считаешь хернёй.',
+      'Клиент, который торгуется за твою работу — нахуй такого клиента.',
+      'Пассивный доход начинается с одного активного пинка себе под зад.',
+      'Деньги любят тех, кто, сука, умеет их просить вслух, а не мямлить.',
+      'Следующий проект окупится не бабками, а связями, не ной про цифры.',
+      'Если ты не умеешь продавать себя — ты будешь продавать чужое и за копейки.',
+      'Хочешь больше денег — перестань делать то, что нихуя не стоит.',
+      'Считаешь, что деньги — зло? Тогда сиди в жопе и не пикай, моралист хуев.',
+      'Пассивный доход — это миф для лохов. Сначала активный, потом пассивный.',
+      'Богатство — это не сумма на счету, а количество месяцев, которые ты можешь прожить без работы.',
+      'Хватит дарить. Твои руки стоят денег, блять. Называй цену.',
+      'Бабки не приходят к тем, кто ждёт у моря погоды. Иди, блядь, работай.',
+      'Твоя цена — это твоя самооценка. Подними её, или будешь в жопе.',
+      'Богатство — это свобода. Хули ты её боишься?',
+      'Деньги любят счёт. Считай, сука, а не мечтай.',
+      'Бабки не берутся из воздуха. Они берутся из твоих действий.',
+      'Деньги — это энергия. Если ты её не направляешь, она уходит.',
+      'Твои навыки — это капитал. Хули ты его проёбываешь?',
+      'Если ты не умеешь считать — ты будешь в жопе.',
+      'Работа без предоплаты — это хуйня. Ты не банк, чтобы кредитовать.',
+      'Деньги — не цель, а средство. Цель — быть свободным, а не рабом бабок.',
+      'Твоё время — это деньги. Перестань проёбывать его на хуйню.',
+      'Не учишься — не зарабатываешь. Всё просто, хули.',
+      'Завидуешь чужому богатству? Лучше спроси, что он сделал, а ты нет.',
+      'Потерять деньги не страшно. Страшно потерять желание их зарабатывать.',
+      'Твоя зарплата — не потолок. Потолок у тебя в голове, пробивай нахуй.',
+      'Если ты не ценишь свой труд, его не оценят другие. Всё просто'
+    ]},
+
+    { id:'luck-risk', label:'Фарт Риск', pool:[
+      'Боишься облажаться? Облажайся быстрее и иди нахуй дальше.',
+      'Страх — это, сука, компас. Куда ссышь — туда и иди.',
+      'Два варианта? Выбери тот, что пугает больше, нахуй комфорт.',
+      'Отдашь одно — получишь совсем другое. Не говно, обещаю',
+      'Оглянись! А всё, уже тю-тю. Ладно, ищи там, где кофе.',
+      'Всё получится, но через жопу, не как планировал(а). И слава богу.',
+      'Шанс дважды не повторяется одинаково. Лови этот, нахуй раздумья.',
+      'Твоя интуиция сегодня прёт без сбоев. Слушай её, не спорь.',
+      'Сегодня получишь знак. Не проеби его.',
+      'Удача благоволит смелым. А трусам достаётся только хуйня.',
+      'Риск оправдан. Даже при факапе это будет охуенный опыт.',
+      'Интуиция не врёт. Врёт твой ебучий страх. Слушай нутро.',
+      'Удача любит наглых. Нахуй скромность, бери своё.',
+      'Знак судьбы уже тут. Не просри его, уткнувшись в экран.',
+      'Ставь ва-банк на себя. Ты огонь, и вселенная это подтвердит.',
+      'Удача — это когда ты рискнул, а мир просто не успел тебя остановить.',
+      'Синица в руках? Хуйня. Лети за журавлём, там вообще охуенно.',
+      'Риск — это не лотерея. Это плата за то, чтобы жить, блять, интересно.',
+      'Шанс постучал. Ты занят в телефоне? Ну-ну, не удивляйся потом, ёпта.',
+      'Твоя лучшая идея сейчас кажется тебе ебанутой. Запиши её, блять.',
+      'Удача не стучит в дверь, она выбивает окно. Открывай, блять.',
+      'Кто не рискует, тот не пьёт шампанское. Но риск должен быть умным, а не ебаным.'
+    ]}
+
+  ];
+
+  var POOL_MAT = [].concat.apply([], THEMES.map(function(t){ return t.pool; }));
+
+  /* ===== CANVAS — чек 50×70 ===== */
+  var canvas = document.getElementById('ticketCanvas');
+  var ctx = canvas.getContext('2d');
+
+  function wrapAtFont(text, maxWidth, fontSize){
+    ctx.save();
+    ctx.font = '500 ' + fontSize + 'px "Playfair Display", Georgia, serif';
+    var words = text.split(/\s+/);
+    var lines = [];
+    var cur = '';
+    for(var i = 0; i < words.length; i++){
+      var test = cur ? cur + ' ' + words[i] : words[i];
+      if(ctx.measureText(test).width > maxWidth && cur){
+        lines.push(cur); cur = words[i];
+      } else { cur = test; }
+    }
+    if(cur) lines.push(cur);
+    ctx.restore();
+    return lines;
+  }
+
+  function drawVerticalText(lines, fontSize, lineHeight, area){
+    ctx.save();
+    ctx.translate(area.x + area.w, area.y);
+    ctx.rotate(Math.PI / 2);
+    ctx.font = '500 ' + fontSize + 'px "Playfair Display", Georgia, serif';
+    ctx.fillStyle = '#000';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    var n = lines.length;
+    var stack = n * lineHeight;
+    var ly0 = (area.w - stack) / 2 + lineHeight / 2;
+    for(var i = 0; i < n; i++){
+      var w = ctx.measureText(lines[i]).width;
+      var lx = (area.h - w) / 2;
+      var ly = ly0 + i * lineHeight;
+      ctx.fillText(lines[i], lx, ly);
+    }
+    ctx.restore();
+  }
+
+  function fitAndDrawText(text, area){
+    var MIN_FS = 16, MAX_FS = 40;
+    for(var fs = MAX_FS; fs >= MIN_FS; fs--){
+      var lh = fs * 1.25;
+      var maxLines = Math.floor(area.w / lh);
+      if(maxLines < 1) continue;
+      var lines = wrapAtFont(text, area.h, fs);
+      if(lines.length <= maxLines){
+        drawVerticalText(lines, fs, lh, area); return;
+      }
+    }
+    var fs2 = MIN_FS, lh2 = fs2 * 1.25;
+    drawVerticalText(wrapAtFont(text, area.h, fs2), fs2, lh2, area);
+  }
+
+  function drawTicket(text, targetImg, targetHint){
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var pad = 30;
+    var lw, lh;
+    if(logoReady && logoImg.width > 0){
+      var maxW = canvas.width - pad * 2;
+      lw = maxW;
+      lh = logoImg.height * (lw / logoImg.width);
+      if(lh > 280){ lh = 280; lw = logoImg.width * (lh / logoImg.height); }
+      ctx.drawImage(logoImg, (canvas.width - lw) / 2, pad, lw, lh);
+    } else { lh = 200; }
+
+    var divY = pad + lh + 30;
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(60, divY); ctx.lineTo(canvas.width - 60, divY); ctx.stroke();
+
+    var area = {
+      x: pad, y: divY + 40,
+      w: canvas.width - pad * 2,
+      h: canvas.height - (divY + 40) - 60
+    };
+
+    fitAndDrawText(text, area);
+
+    ctx.font = '18px Georgia, serif';
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('· гадание дня ·', canvas.width / 2, canvas.height - 18);
+
+    targetImg.src = canvas.toDataURL('image/png');
+    targetImg.style.display = 'block';
+    if(targetHint) targetHint.style.display = 'block';
+  }
+
+  /* ===== ШАР ===== */
+  var orb = document.getElementById('orb');
+  var tapHint = document.getElementById('tapHint');
+  var resultText = document.getElementById('resultText');
+  var printBtnStd = document.getElementById('printBtnStd');
+  var againBtn = document.getElementById('againBtn');
+  var resultImg = document.getElementById('resultImg');
+  var saveHint = document.getElementById('saveHint');
+  var currentFortune = '';
+  var lastShar = -1;
+
+  onTap(orb, function(){
+    if(orb.classList.contains('shaking')) return;
+    orb.classList.add('shaking');
+    resultText.classList.remove('show');
+    tapHint.textContent = '...';
+    setTimeout(function(){
+      orb.classList.remove('shaking');
+      var i;
+      do { i = Math.floor(Math.random() * POOL_MAT.length); }
+      while(i === lastShar && POOL_MAT.length > 1);
+      lastShar = i;
+      currentFortune = POOL_MAT[i];
+      resultText.textContent = currentFortune;
+      resultText.classList.add('show');
+      tapHint.textContent = '';
+      printBtnStd.style.display = 'block';
+      againBtn.style.display = 'block';
+    }, 600);
+  });
+
+  onTap(printBtnStd, function(){ drawTicket(currentFortune, resultImg, saveHint); });
+
+  onTap(againBtn, function(){
+    resultText.classList.remove('show');
+    resultText.textContent = '';
+    resultImg.style.display = 'none';
+    saveHint.style.display = 'none';
+    printBtnStd.style.display = 'none';
+    againBtn.style.display = 'none';
+    tapHint.textContent = 'коснись шара';
+  });
+
+  /* ===== ВОПРОС ===== */
+  var themesGrid = document.getElementById('themesGrid');
+  var qThemeName = document.getElementById('qThemeName');
+  var qResultText = document.getElementById('qResultText');
+  var resultImgQ = document.getElementById('resultImgQ');
+  var saveHintQ = document.getElementById('saveHintQ');
+  var printBtnQ = document.getElementById('printBtnQ');
+  var qAgainBtn = document.getElementById('qAgainBtn');
+  var qBackBtn = document.getElementById('qBackBtn');
+  var currentTheme = null;
+  var currentQFortune = '';
+
+  THEMES.forEach(function(t){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'theme-btn';
+    b.textContent = t.label;
+    onTap(b, function(){ openCards(t); });
+    themesGrid.appendChild(b);
+  });
+
+  function showQView(id){
+    ['qViewThemes','qViewCards','qViewResult'].forEach(function(v){
+      document.getElementById(v).classList.toggle('active', v === id);
+    });
+  }
+
+  function openCards(theme){
+    currentTheme = theme;
+    qThemeName.textContent = theme.label;
+    showQView('qViewCards');
+  }
+
+  document.querySelectorAll('#cardsRow .card').forEach(function(card){
+    onTap(card, function(){
+      if(card.classList.contains('shaking')) return;
+      card.classList.add('shaking');
+      setTimeout(function(){
+        card.classList.remove('shaking');
+        var pool = currentTheme.pool;
+        var phrase = pool[Math.floor(Math.random() * pool.length)];
+        currentQFortune = phrase;
+        qResultText.textContent = phrase;
+        resultImgQ.style.display = 'none';
+        saveHintQ.style.display = 'none';
+        printBtnQ.style.display = 'block';
+        showQView('qViewResult');
+      }, 600);
+    });
+  });
+
+  onTap(qBackBtn, function(){ showQView('qViewThemes'); });
+  onTap(printBtnQ, function(){ drawTicket(currentQFortune, resultImgQ, saveHintQ); });
+  onTap(qAgainBtn, function(){
+    resultImgQ.style.display = 'none';
+    saveHintQ.style.display = 'none';
+    qResultText.textContent = '';
+    showQView('qViewThemes');
+  });
+
+  /* ===== ТАБЫ ===== */
+  document.querySelectorAll('.tab').forEach(function(t){
+    onTap(t, function(){
+      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+      t.classList.add('active');
+      document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+      document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ===== SW ===== */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+</script>
+</body>
+</html>
