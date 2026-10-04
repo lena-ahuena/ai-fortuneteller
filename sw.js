@@ -1,4 +1,4 @@
-const CACHE = 'art-piknik-v1';
+const CACHE = 'art-piknik-v2';
 const ASSETS = [
   './',
   './index.html',
